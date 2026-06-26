@@ -48,7 +48,10 @@ const screens = {
   dashboard: document.getElementById("screen-dashboard"),
   history: document.getElementById("screen-history"),
   professor: document.getElementById("screen-professor"),
-  admin: document.getElementById("screen-admin")
+  profBulk: document.getElementById("screen-prof-bulk-upload"),
+  profStudentAnalytics: document.getElementById("screen-prof-student-analytics"),
+  admin: document.getElementById("screen-admin"),
+  about: document.getElementById("screen-about")
 };
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -176,13 +179,18 @@ function navigateTo(screenKey) {
   if (screenKey === "dashboard") renderDashboard();
   if (screenKey === "history") renderHistory();
   if (screenKey === "professor") renderProfessorPortal();
+  if (screenKey === "profBulk") renderProfessorBulkUpload();
+  if (screenKey === "profStudentAnalytics") renderProfessorStudentAnalytics();
   if (screenKey === "admin") renderAdminPortal();
 }
 
 function setupEventListeners() {
   document.getElementById("brand-link").addEventListener("click", e => { e.preventDefault(); routeByRole(); });
   document.getElementById("btn-landing-start").addEventListener("click", () => navigateTo("auth"));
-  document.getElementById("btn-landing-about").addEventListener("click", () => alert("QuizYou includes secure access, customizable quizzes, timed practice, saved scores, dashboards, professor content management, and admin role management."));
+  document.getElementById("btn-landing-about").addEventListener("click", () => navigateTo("about"));
+  document.getElementById("btn-header-about").addEventListener("click", () => navigateTo("about"));
+  document.getElementById("btn-about-start").addEventListener("click", () => appState.currentUser ? routeByRole() : navigateTo("auth"));
+  document.getElementById("btn-about-back").addEventListener("click", () => appState.currentUser ? routeByRole() : navigateTo("landing"));
   document.getElementById("btn-auth-back").addEventListener("click", () => navigateTo("landing"));
 
   document.getElementById("auth-form").addEventListener("submit", e => {
@@ -218,6 +226,14 @@ function setupEventListeners() {
   document.getElementById("btn-history-clear").addEventListener("click", clearHistory);
 
   document.getElementById("btn-prof-add-question").addEventListener("click", addProfessorQuestion);
+  document.getElementById("btn-prof-bulk-page").addEventListener("click", () => navigateTo("profBulk"));
+  document.getElementById("btn-prof-student-analytics").addEventListener("click", () => navigateTo("profStudentAnalytics"));
+  document.getElementById("btn-prof-bulk-back").addEventListener("click", () => navigateTo("professor"));
+  document.getElementById("btn-prof-bulk-import").addEventListener("click", bulkImportProfessorQuestions);
+  document.getElementById("btn-prof-bulk-sample").addEventListener("click", fillBulkQuestionSample);
+  document.getElementById("btn-prof-bulk-clear").addEventListener("click", () => { document.getElementById("prof-bulk-text").value = ""; document.getElementById("prof-bulk-status").textContent = ""; });
+  document.getElementById("prof-student-filter").addEventListener("change", renderProfessorStudentAnalytics);
+  document.getElementById("btn-prof-analytics-back").addEventListener("click", () => navigateTo("professor"));
   ["toggle-quizzing", "toggle-scoring", "toggle-ranking"].forEach(id => document.getElementById(id).addEventListener("change", updateFeatureToggles));
   document.getElementById("btn-prof-logout").addEventListener("click", logout);
   document.getElementById("btn-admin-add-user").addEventListener("click", addAdminUser);
@@ -501,6 +517,186 @@ function updateFeatureToggles() {
   };
   savePlatformSettings();
 }
+
+
+function renderProfessorBulkUpload() {
+  const status = document.getElementById("prof-bulk-status");
+  if (status) status.textContent = "Paste JSON or CSV-style questions, then import them into the local question bank.";
+}
+
+function fillBulkQuestionSample() {
+  document.getElementById("prof-bulk-text").value = `[
+  {
+    "subject": "Testing",
+    "topic": "Regression",
+    "question": "What is regression testing used for?",
+    "options": ["Testing only new features", "Checking that existing features still work", "Designing the UI", "Deploying the app"],
+    "correctAnswer": 1
+  },
+  {
+    "subject": "Agile",
+    "topic": "Scrum",
+    "question": "Who prioritizes the product backlog?",
+    "options": ["Scrum Master", "Product Owner", "QA Tester", "Database Admin"],
+    "correctAnswer": 1
+  }
+]`;
+  document.getElementById("prof-bulk-status").textContent = "Sample JSON loaded. Click Import Bulk Questions to add them.";
+}
+
+function bulkImportProfessorQuestions() {
+  const raw = document.getElementById("prof-bulk-text").value.trim();
+  const status = document.getElementById("prof-bulk-status");
+  if (!raw) {
+    status.textContent = "Paste questions before importing.";
+    return;
+  }
+
+  let parsedQuestions = [];
+  try {
+    const data = JSON.parse(raw);
+    parsedQuestions = Array.isArray(data) ? data : [data];
+  } catch {
+    parsedQuestions = parseBulkCSVQuestions(raw);
+  }
+
+  const validQuestions = parsedQuestions.map((q, idx) => normalizeBulkQuestion(q, idx)).filter(Boolean);
+
+  if (!validQuestions.length) {
+    status.textContent = "No valid questions found. Use JSON or CSV format: Subject, Topic, Question, Option A, Option B, Option C, Option D, Correct Option";
+    return;
+  }
+
+  appState.allQuestions.push(...validQuestions);
+  const localQuestions = readJSON("quizyou_question_bank", []);
+  localQuestions.push(...validQuestions);
+  writeJSON("quizyou_question_bank", localQuestions);
+
+  hydrateSubjects();
+  status.textContent = `${validQuestions.length} question${validQuestions.length === 1 ? "" : "s"} imported successfully.`;
+  document.getElementById("prof-bulk-text").value = "";
+}
+
+function parseBulkCSVQuestions(raw) {
+  return raw
+    .split(/\n+/)
+    .map(line => line.trim())
+    .filter(Boolean)
+    .map(line => {
+      const parts = line.split(",").map(p => p.trim());
+      return {
+        subject: parts[0],
+        topic: parts[1],
+        question: parts[2],
+        options: parts.slice(3, 7),
+        correctAnswer: parts[7]
+      };
+    });
+}
+
+function normalizeBulkQuestion(q, idx) {
+  const subject = String(q.subject || "").trim();
+  const topic = String(q.topic || subject || "General").trim();
+  const question = String(q.question || "").trim();
+  const options = Array.isArray(q.options)
+    ? q.options.map(o => String(o).trim()).filter(Boolean)
+    : [q.optionA, q.optionB, q.optionC, q.optionD].map(o => String(o || "").trim()).filter(Boolean);
+
+  let correctAnswer = q.correctAnswer ?? q.answer ?? q.correct;
+  if (typeof correctAnswer === "string") {
+    const val = correctAnswer.trim().toUpperCase();
+    if (["A", "B", "C", "D"].includes(val)) correctAnswer = val.charCodeAt(0) - 65;
+    else correctAnswer = parseInt(val, 10);
+  }
+
+  if (!subject || !question || options.length < 2 || Number.isNaN(correctAnswer) || correctAnswer < 0 || correctAnswer >= options.length) {
+    return null;
+  }
+
+  return {
+    id: `bulk_${Date.now()}_${idx}_${Math.floor(Math.random() * 10000)}`,
+    subject,
+    topic,
+    question,
+    options,
+    correctAnswer,
+    active: true,
+    source: "Professor Bulk Upload"
+  };
+}
+
+function renderProfessorStudentAnalytics() {
+  const select = document.getElementById("prof-student-filter");
+  const studentUsers = appState.students.filter(u => u.role === "Student");
+  const previousValue = select.value || "all";
+  select.innerHTML = `<option value="all">All Students</option>` + studentUsers.map(u => `<option value="${escapeAttr(u.id)}">${escapeHTML(u.firstName)} ${escapeHTML(u.lastName)} (${escapeHTML(u.id)})</option>`).join("");
+  select.value = [...select.options].some(o => o.value === previousValue) ? previousValue : "all";
+
+  const attempts = readJSON("quizyou_all_attempts", []);
+  const selectedStudent = select.value;
+  const filtered = selectedStudent === "all" ? attempts : attempts.filter(a => a.userId === selectedStudent);
+
+  const roster = document.getElementById("prof-student-summary");
+  const details = document.getElementById("prof-student-detail-list");
+
+  const summaries = studentUsers.map(student => {
+    const studentAttempts = attempts.filter(a => a.userId === student.id);
+    const scored = studentAttempts.filter(a => typeof a.percentage === "number");
+    const avg = scored.length ? Math.round(scored.reduce((sum, a) => sum + a.percentage, 0) / scored.length) : null;
+    const totalTime = studentAttempts.reduce((sum, a) => sum + (a.timeTakenSec || 0), 0);
+    const best = scored.length ? Math.max(...scored.map(a => a.percentage)) : null;
+    return { student, count: studentAttempts.length, avg, totalTime, best };
+  });
+
+  roster.innerHTML = summaries.map(s => `
+    <div class="student-summary-card">
+      <strong>${escapeHTML(s.student.firstName)} ${escapeHTML(s.student.lastName)}</strong>
+      <span>${escapeHTML(s.student.id)}</span>
+      <div class="student-summary-stats">
+        <span>Quizzes: ${s.count}</span>
+        <span>Avg: ${s.avg === null ? "--" : s.avg + "%"}</span>
+        <span>Best: ${s.best === null ? "--" : s.best + "%"}</span>
+        <span>Time: ${formatSeconds(s.totalTime)}</span>
+      </div>
+    </div>
+  `).join("");
+
+  if (!filtered.length) {
+    details.innerHTML = `<div class="empty-state">No saved quiz attempts found for this selection yet.</div>`;
+    return;
+  }
+
+  details.innerHTML = filtered.map(a => `
+    <div class="history-card professor-attempt-card">
+      <div class="history-card-header">
+        <div>
+          <strong>${escapeHTML(a.userName || a.userId)}</strong>
+          <span>${escapeHTML(a.subject)} • ${escapeHTML(a.mode || "practice")} • ${escapeHTML(a.date)}</span>
+        </div>
+        <div class="history-score-big" style="${scoreStyle(a.percentage)}">${a.percentage === null ? "Hidden" : a.percentage + "%"}</div>
+      </div>
+      <div class="attempt-meta-grid">
+        <span>Score: <strong>${escapeHTML(a.score)}</strong></span>
+        <span>Time Spent: <strong>${escapeHTML(a.timeTaken || formatSeconds(a.timeTakenSec || 0))}</strong></span>
+        <span>Questions: <strong>${a.totalQuestions}</strong></span>
+        <span>Submitted: <strong>${a.autoSubmitted ? "Auto" : "Manual"}</strong></span>
+      </div>
+      <details class="attempt-review-details">
+        <summary>View question-level results</summary>
+        <div class="review-list">
+          ${(a.review || []).map((r, idx) => `
+            <div class="review-item ${r.isCorrect ? "correct" : "incorrect"}">
+              <strong>${idx + 1}. ${escapeHTML(r.question)}</strong>
+              <span>Student answer: ${escapeHTML(r.selectedAnswerText)}</span>
+              <span>Correct answer: ${escapeHTML(r.correctAnswerText)}</span>
+            </div>
+          `).join("")}
+        </div>
+      </details>
+    </div>
+  `).join("");
+}
+
 
 function renderAdminPortal() {
   const list = document.getElementById("admin-user-list");

@@ -14,6 +14,7 @@
       <div class="brand-name">QuizYou</div>
     </a>
     <div class="user-status">
+      <button class="nav-link-btn" id="btn-header-about">About</button>
       <div class="user-badge">
         <span class="user-avatar" id="user-status-avatar"></span>
         <span id="user-status-text">Guest Mode</span>
@@ -186,6 +187,10 @@
         <div class="eyebrow">Professor Portal</div>
         <h2 class="config-title">Content & Analytics</h2>
         <p class="config-desc">Manage question banks, organize questions by module/topic, control active question sets, and review class-wide performance.</p>
+        <div class="hero-actions professor-actions">
+          <button class="btn btn-primary" id="btn-prof-bulk-page">Bulk Upload Questions</button>
+          <button class="btn btn-secondary" id="btn-prof-student-analytics">Student Quiz Analytics</button>
+        </div>
         <div class="dashboard-grid">
           <div class="dash-card">
             <h3 class="dash-card-title">Add Question to Bank</h3>
@@ -222,6 +227,56 @@
         <div class="hero-actions"><button class="btn btn-secondary" id="btn-prof-logout">Log Out</button></div>
       </section>
 
+
+      <section id="screen-prof-bulk-upload" class="screen">
+        <div class="eyebrow">Professor Portal</div>
+        <h2 class="config-title">Bulk Upload Questions</h2>
+        <p class="config-desc">
+          Import multiple questions at once using JSON or a simple CSV-style format. Imported questions are saved to the local question bank and become available for quiz generation.
+        </p>
+
+        <div class="dash-card">
+          <h3 class="dash-card-title">Accepted Formats</h3>
+          <p><strong>JSON:</strong> subject, topic, question, options, correctAnswer</p>
+          <p><strong>CSV-style:</strong> Subject, Topic, Question, Option A, Option B, Option C, Option D, Correct Option</p>
+        </div>
+
+        <div class="form-group">
+          <label for="prof-bulk-text">Bulk Question Data</label>
+          <textarea id="prof-bulk-text" class="form-control bulk-textarea" placeholder='Paste JSON or CSV-style questions here'></textarea>
+        </div>
+
+        <div class="bulk-status" id="prof-bulk-status"></div>
+
+        <div class="hero-actions">
+          <button class="btn btn-primary" id="btn-prof-bulk-import">Import Bulk Questions</button>
+          <button class="btn btn-secondary" id="btn-prof-bulk-sample">Load Sample</button>
+          <button class="btn btn-secondary" id="btn-prof-bulk-clear">Clear</button>
+          <button class="btn btn-secondary" id="btn-prof-bulk-back">Back to Professor Portal</button>
+        </div>
+      </section>
+
+      <section id="screen-prof-student-analytics" class="screen">
+        <div class="eyebrow">Professor Portal</div>
+        <h2 class="config-title">Student Quiz Analytics</h2>
+        <p class="config-desc">
+          View each individual student's quiz attempts, scores, time spent, and question-level results.
+        </p>
+
+        <div class="history-toolbar">
+          <select id="prof-student-filter" class="form-control"></select>
+        </div>
+
+        <div class="student-summary-grid" id="prof-student-summary"></div>
+
+        <h3 class="dash-card-title analytics-detail-heading">Individual Quiz Attempts</h3>
+        <div class="history-list detailed-history" id="prof-student-detail-list"></div>
+
+        <div class="hero-actions">
+          <button class="btn btn-secondary" id="btn-prof-analytics-back">Back to Professor Portal</button>
+        </div>
+      </section>
+
       <section id="screen-admin" class="screen">
         <div class="eyebrow">Admin Portal</div>
         <h2 class="config-title">User Registration & Roles</h2>
@@ -239,11 +294,87 @@
         </div>
         <div class="hero-actions"><button class="btn btn-secondary" id="btn-admin-logout">Log Out</button></div>
       </section>
+
+      <section id="screen-about" class="screen">
+        <div class="eyebrow">About QuizYou</div>
+        <h2 class="config-title">A Smarter Quiz Practice Platform</h2>
+        <p class="config-desc">
+          QuizYou is a web-based study and assessment platform built to help students practice course material,
+          receive immediate feedback, and track their learning progress over time.
+        </p>
+
+        <div class="about-hero-panel">
+          <div>
+            <span class="about-badge">CS473-673 Software Engineering</span>
+            <h3>Built for personalized, data-driven learning.</h3>
+            <p>
+              Students can generate timed quizzes, customize quiz settings, save results, review missed questions,
+              and monitor performance through a dashboard. Professors can manage question banks and view class-wide
+              analytics, while admins manage users and role-based access.
+            </p>
+          </div>
+        </div>
+
+        <div class="about-grid">
+          <div class="about-card">
+            <div class="about-icon">🎯</div>
+            <h3>Custom Quizzes</h3>
+            <p>Choose a subject, quiz length, time limit, and quiz mode to match your study goals.</p>
+          </div>
+
+          <div class="about-card">
+            <div class="about-icon">⏱</div>
+            <h3>Timed Practice</h3>
+            <p>Practice under realistic exam conditions with timer warnings and automatic submission.</p>
+          </div>
+
+          <div class="about-card">
+            <div class="about-icon">📊</div>
+            <h3>Performance Dashboard</h3>
+            <p>Track average score, best score, completed quizzes, mastery rank, and topic-level progress.</p>
+          </div>
+
+          <div class="about-card">
+            <div class="about-icon">📝</div>
+            <h3>Quiz History</h3>
+            <p>Save completed quiz attempts and review your answers, correct answers, score, date, and time taken.</p>
+          </div>
+
+          <div class="about-card">
+            <div class="about-icon">👩‍🏫</div>
+            <h3>Professor Tools</h3>
+            <p>Import questions, organize content by module and topic, control question sets, and view analytics.</p>
+          </div>
+
+          <div class="about-card">
+            <div class="about-icon">🔐</div>
+            <h3>Role-Based Access</h3>
+            <p>Student, professor, and admin roles provide the right tools for each type of platform user.</p>
+          </div>
+        </div>
+
+        <div class="dash-card about-tech-card">
+          <h3 class="dash-card-title">Technology Stack</h3>
+          <div class="tech-stack">
+            <span>HTML</span>
+            <span>CSS</span>
+            <span>JavaScript</span>
+            <span>JSON Data</span>
+            <span>GitHub</span>
+            <span>Render / GitHub Pages Ready</span>
+          </div>
+        </div>
+
+        <div class="hero-actions">
+          <button class="btn btn-primary" id="btn-about-start">Start Using QuizYou</button>
+          <button class="btn btn-secondary" id="btn-about-back">Back</button>
+        </div>
+      </section>
     </div>
   </main>
 
   <footer class="app-footer">
-    <div class="footer-note">QuizYou supports students, professors, and admins with role-based access.</div>
+    <div class="footer-note">QuizYou supports customizable quizzes, saved results, performance dashboards, and role-based access.</div>
     <span>QuizYou Project &copy; 2026. Built for CS473-673.</span>
   </footer>
   <script src="app.js"></script>
