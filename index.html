@@ -63,6 +63,10 @@
         <p class="config-desc">Choose a subject, number of questions, time limit, and quiz mode before starting.</p>
         <form id="config-form" onsubmit="return false;">
           <div class="form-group">
+            <label for="config-class">Class</label>
+            <select id="config-class" class="form-control"></select>
+          </div>
+          <div class="form-group">
             <label for="config-subject">Subject Module</label>
             <select id="config-subject" class="form-control"></select>
           </div>
@@ -193,8 +197,22 @@
         </div>
         <div class="dashboard-grid">
           <div class="dash-card">
+            <h3 class="dash-card-title">Class Management</h3>
+            <p>Create classes owned by this professor. Students may be enrolled in multiple classes, but each class can only belong to one professor.</p>
+            <div id="prof-class-list" class="class-list"></div>
+            <form id="prof-class-form" onsubmit="return false;">
+              <div class="form-row">
+                <div class="form-group"><label for="prof-class-code">Class Code</label><input id="prof-class-code" class="form-control" placeholder="e.g. CS473"></div>
+                <div class="form-group"><label for="prof-class-name">Class Name</label><input id="prof-class-name" class="form-control" placeholder="e.g. Software Engineering"></div>
+              </div>
+              <div class="form-group"><label>Enroll Students</label><div id="prof-class-students" class="control-list"></div></div>
+              <button class="btn btn-primary" id="btn-prof-create-class">Create Class</button>
+            </form>
+          </div>
+          <div class="dash-card">
             <h3 class="dash-card-title">Add Question to Bank</h3>
             <form id="prof-question-form" onsubmit="return false;">
+              <div class="form-group"><label for="prof-class-select">Class</label><select id="prof-class-select" class="form-control"></select></div>
               <div class="form-row">
                 <div class="form-group"><label for="prof-subject">Subject</label><input id="prof-subject" class="form-control" placeholder="e.g. Testing"></div>
                 <div class="form-group"><label for="prof-topic">Topic</label><input id="prof-topic" class="form-control" placeholder="e.g. Regression"></div>
@@ -232,13 +250,18 @@
         <div class="eyebrow">Professor Portal</div>
         <h2 class="config-title">Bulk Upload Questions</h2>
         <p class="config-desc">
-          Import multiple questions at once using JSON or a simple CSV-style format. Imported questions are saved to the local question bank and become available for quiz generation.
+          Import multiple questions at once into one of your classes using JSON or a simple CSV-style format. Imported questions are saved to the local question bank and become available for enrolled students.
         </p>
 
         <div class="dash-card">
           <h3 class="dash-card-title">Accepted Formats</h3>
           <p><strong>JSON:</strong> subject, topic, question, options, correctAnswer</p>
           <p><strong>CSV-style:</strong> Subject, Topic, Question, Option A, Option B, Option C, Option D, Correct Option</p>
+        </div>
+
+        <div class="form-group">
+          <label for="prof-bulk-class">Class</label>
+          <select id="prof-bulk-class" class="form-control"></select>
         </div>
 
         <div class="form-group">

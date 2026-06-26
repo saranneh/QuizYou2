@@ -8,6 +8,7 @@ const FALLBACK_STUDENTS = [
   { id: "abhikoka", firstName: "Abhishikth", lastName: "Koka", email: "abhikoka@bu.edu", role: "Student", active: true },
   { id: "csmith00", firstName: "Cole", lastName: "Smith", email: "csmith00@bu.edu", role: "Student", active: true },
   { id: "professor", firstName: "Demo", lastName: "Professor", email: "professor@bu.edu", role: "Professor", active: true },
+  { id: "professor2", firstName: "Second", lastName: "Professor", email: "professor2@bu.edu", role: "Professor", active: true },
   { id: "admin", firstName: "Platform", lastName: "Admin", email: "admin@bu.edu", role: "Admin", active: true }
 ];
 
@@ -26,6 +27,8 @@ let appState = {
   currentUser: null,
   students: [],
   allQuestions: [],
+  classes: [],
+  activeClassId: "all",
   activeSubjects: {},
   settings: { quizzing: true, scoring: true, ranking: true },
   quizQuestions: [],
@@ -57,6 +60,7 @@ const screens = {
 document.addEventListener("DOMContentLoaded", async () => {
   setupEventListeners();
   await loadData();
+  loadClasses();
   loadPlatformSettings();
   hydrateSubjects();
   restoreSession();
@@ -88,13 +92,85 @@ async function loadData() {
   appState.allQuestions = mergeById(appState.allQuestions, localQuestions);
 }
 
+
+function loadClasses() {
+  const savedClasses = readJSON("quizyou_classes", null);
+  if (savedClasses && Array.isArray(savedClasses) && savedClasses.length) {
+    appState.classes = savedClasses;
+    return;
+  }
+
+  appState.classes = [
+    {
+      id: "class_cs473",
+      code: "CS473",
+      name: "CS473 Software Engineering",
+      professorId: "professor",
+      studentIds: ["saranneh", "dbacon89", "smuren", "chaman11", "abhikoka", "csmith00"],
+      active: true
+    },
+    {
+      id: "class_cs544",
+      code: "CS544",
+      name: "CS544 Foundations of Analytics",
+      professorId: "professor2",
+      studentIds: ["saranneh", "abhikoka"],
+      active: true
+    }
+  ];
+
+  writeJSON("quizyou_classes", appState.classes);
+}
+
+function saveClasses() {
+  writeJSON("quizyou_classes", appState.classes);
+}
+
+function getProfessorClasses(professorId = appState.currentUser?.id) {
+  return appState.classes.filter(c => c.professorId === professorId && c.active !== false);
+}
+
+function getStudentClasses(studentId = appState.currentUser?.id) {
+  return appState.classes.filter(c => (c.studentIds || []).includes(studentId) && c.active !== false);
+}
+
+function getClassById(classId) {
+  return appState.classes.find(c => c.id === classId);
+}
+
+function getClassLabel(classId) {
+  if (!classId || classId === "all") return "All Enrolled Classes";
+  const klass = getClassById(classId);
+  return klass ? `${klass.code} — ${klass.name}` : "Unassigned Class";
+}
+
+function professorOwnsClass(classId) {
+  const klass = getClassById(classId);
+  return klass && klass.professorId === appState.currentUser?.id;
+}
+
+function getVisibleQuestionsForCurrentStudent() {
+  if (!appState.currentUser || appState.currentUser.role !== "Student") {
+    return appState.allQuestions;
+  }
+  const enrolledClassIds = getStudentClasses(appState.currentUser.id).map(c => c.id);
+  return appState.allQuestions.filter(q => !q.classId || enrolledClassIds.includes(q.classId));
+}
+
+
 function normalizeUsers(users) {
   const base = users.map(u => ({ ...u, role: u.role || "Student", active: u.active !== false }));
   return mergeById(base, FALLBACK_STUDENTS.filter(u => u.role !== "Student"));
 }
 
 function normalizeQuestions(questions) {
-  return questions.map((q, i) => ({ ...q, id: q.id || Date.now() + i, topic: q.topic || q.subject || "General", active: q.active !== false }));
+  return questions.map((q, i) => ({
+    ...q,
+    id: q.id || Date.now() + i,
+    topic: q.topic || q.subject || "General",
+    classId: q.classId || "class_cs473",
+    active: q.active !== false
+  }));
 }
 
 function mergeById(a, b) {
@@ -131,10 +207,22 @@ function hydrateSubjects() {
 
 function renderSubjectOptions() {
   const select = document.getElementById("config-subject");
+  const classSelect = document.getElementById("config-class");
   const historyFilter = document.getElementById("history-filter");
   if (!select) return;
-  const subjects = Object.keys(appState.activeSubjects).filter(s => appState.activeSubjects[s]).sort();
+
+  if (classSelect) {
+    const classes = appState.currentUser?.role === "Student" ? getStudentClasses(appState.currentUser.id) : appState.classes;
+    classSelect.innerHTML = `<option value="all">All Enrolled Classes</option>` + classes.map(c => `<option value="${escapeAttr(c.id)}">${escapeHTML(c.code)} — ${escapeHTML(c.name)}</option>`).join("");
+  }
+
+  const visibleQuestions = getVisibleQuestionsForCurrentStudent();
+  const subjects = [...new Set(visibleQuestions.map(q => q.subject))]
+    .filter(s => appState.activeSubjects[s])
+    .sort();
+
   select.innerHTML = `<option value="all">All Active Subjects</option>` + subjects.map(s => `<option value="${escapeAttr(s)}">${escapeHTML(getSubjectLabel(s))}</option>`).join("");
+
   if (historyFilter) {
     historyFilter.innerHTML = `<option value="all">All Subjects</option>` + [...new Set(appState.allQuestions.map(q => q.subject))].sort().map(s => `<option value="${escapeAttr(s)}">${escapeHTML(getSubjectLabel(s))}</option>`).join("");
   }
@@ -226,6 +314,7 @@ function setupEventListeners() {
   document.getElementById("btn-history-clear").addEventListener("click", clearHistory);
 
   document.getElementById("btn-prof-add-question").addEventListener("click", addProfessorQuestion);
+  document.getElementById("btn-prof-create-class").addEventListener("click", createProfessorClass);
   document.getElementById("btn-prof-bulk-page").addEventListener("click", () => navigateTo("profBulk"));
   document.getElementById("btn-prof-student-analytics").addEventListener("click", () => navigateTo("profStudentAnalytics"));
   document.getElementById("btn-prof-bulk-back").addEventListener("click", () => navigateTo("professor"));
@@ -252,13 +341,16 @@ function logout() {
 function setupQuiz() {
   if (!appState.settings.quizzing) return alert("Quizzing is currently disabled by the professor.");
   const subject = document.getElementById("config-subject").value;
+  const classId = document.getElementById("config-class") ? document.getElementById("config-class").value : "all";
   const numQuestionsInput = Math.max(1, Math.min(parseInt(document.getElementById("config-questions").value) || 10, 40));
   const minutesInput = parseInt(document.getElementById("config-time").value) || 10;
   appState.activeSubject = subject;
+  appState.activeClassId = classId;
   appState.totalTimeLimit = minutesInput;
   appState.quizMode = document.getElementById("config-mode").value;
 
-  let pool = appState.allQuestions.filter(q => q.active !== false && appState.activeSubjects[q.subject] !== false);
+  let pool = getVisibleQuestionsForCurrentStudent().filter(q => q.active !== false && appState.activeSubjects[q.subject] !== false);
+  if (classId !== "all") pool = pool.filter(q => q.classId === classId);
   if (subject !== "all") pool = pool.filter(q => q.subject === subject);
   shuffle(pool);
   appState.quizQuestions = pool.slice(0, Math.min(numQuestionsInput, pool.length));
@@ -356,6 +448,8 @@ function finishQuiz(autoSubmitted) {
     userName: `${appState.currentUser.firstName} ${appState.currentUser.lastName}`,
     subject: getSubjectLabel(appState.activeSubject),
     subjectKey: appState.activeSubject,
+    classId: appState.activeClassId,
+    className: getClassLabel(appState.activeClassId),
     mode: appState.quizMode,
     score: `${correctCount}/${totalQuestions}`,
     correctCount,
@@ -477,28 +571,112 @@ function renderProfessorPortal() {
   document.getElementById("toggle-quizzing").checked = appState.settings.quizzing;
   document.getElementById("toggle-scoring").checked = appState.settings.scoring;
   document.getElementById("toggle-ranking").checked = appState.settings.ranking;
+
+  renderProfessorClassManager();
+  renderProfessorQuestionClassOptions();
+
+  const ownedClassIds = getProfessorClasses().map(c => c.id);
   const controls = document.getElementById("prof-subject-controls");
-  controls.innerHTML = Object.keys(appState.activeSubjects).sort().map(subject => `<label class="toggle-row"><input type="checkbox" data-subject="${escapeAttr(subject)}" ${appState.activeSubjects[subject] ? "checked" : ""}> ${escapeHTML(subject)} question set active</label>`).join("");
+  const professorQuestions = appState.allQuestions.filter(q => !q.classId || ownedClassIds.includes(q.classId));
+  const subjects = [...new Set(professorQuestions.map(q => q.subject))].sort();
+
+  controls.innerHTML = subjects.map(subject => `<label class="toggle-row"><input type="checkbox" data-subject="${escapeAttr(subject)}" ${appState.activeSubjects[subject] ? "checked" : ""}> ${escapeHTML(subject)} question set active</label>`).join("") || `<div class="empty-state">No question sets available for your classes yet.</div>`;
   controls.querySelectorAll("input[data-subject]").forEach(input => input.addEventListener("change", e => {
     appState.activeSubjects[e.target.dataset.subject] = e.target.checked;
     writeJSON("quizyou_active_subjects", appState.activeSubjects);
     renderSubjectOptions();
   }));
-  const attempts = readJSON("quizyou_all_attempts", []);
+
+  const attempts = readJSON("quizyou_all_attempts", []).filter(a => !a.classId || ownedClassIds.includes(a.classId));
   const scored = attempts.filter(a => typeof a.percentage === "number");
   document.getElementById("prof-attempts").textContent = attempts.length;
   document.getElementById("prof-class-avg").textContent = scored.length ? `${Math.round(scored.reduce((s,a)=>s+a.percentage,0)/scored.length)}%` : "--";
   renderTopicMastery("prof-topic-analytics", attempts);
 }
 
+function renderProfessorClassManager() {
+  const classList = document.getElementById("prof-class-list");
+  const studentSelect = document.getElementById("prof-class-students");
+  if (!classList || !studentSelect) return;
+
+  const professorClasses = getProfessorClasses();
+  classList.innerHTML = professorClasses.map(c => `
+    <div class="class-card">
+      <div>
+        <strong>${escapeHTML(c.code)} — ${escapeHTML(c.name)}</strong>
+        <span>${(c.studentIds || []).length} enrolled student${(c.studentIds || []).length === 1 ? "" : "s"}</span>
+      </div>
+      <button class="mini-btn" data-class-delete="${escapeAttr(c.id)}">Archive</button>
+    </div>
+  `).join("") || `<div class="empty-state">No classes created yet. Create a class below.</div>`;
+
+  classList.querySelectorAll("button[data-class-delete]").forEach(btn => btn.addEventListener("click", () => archiveProfessorClass(btn.dataset.classDelete)));
+
+  studentSelect.innerHTML = appState.students
+    .filter(u => u.role === "Student" && u.active !== false)
+    .map(u => `<label class="toggle-row"><input type="checkbox" value="${escapeAttr(u.id)}"> ${escapeHTML(u.firstName)} ${escapeHTML(u.lastName)} (${escapeHTML(u.id)})</label>`)
+    .join("");
+}
+
+function renderProfessorQuestionClassOptions() {
+  const select = document.getElementById("prof-class-select");
+  const bulkSelect = document.getElementById("prof-bulk-class");
+  const classes = getProfessorClasses();
+
+  const html = classes.map(c => `<option value="${escapeAttr(c.id)}">${escapeHTML(c.code)} — ${escapeHTML(c.name)}</option>`).join("");
+  if (select) select.innerHTML = html || `<option value="">Create a class first</option>`;
+  if (bulkSelect) bulkSelect.innerHTML = html || `<option value="">Create a class first</option>`;
+}
+
+function createProfessorClass() {
+  const code = document.getElementById("prof-class-code").value.trim().toUpperCase();
+  const name = document.getElementById("prof-class-name").value.trim();
+  const selectedStudents = [...document.querySelectorAll("#prof-class-students input:checked")].map(i => i.value);
+
+  if (!code || !name) return alert("Enter a class code and class name.");
+
+  const duplicate = appState.classes.find(c => c.active !== false && (c.code.toLowerCase() === code.toLowerCase() || c.name.toLowerCase() === name.toLowerCase()));
+  if (duplicate) {
+    const owner = appState.students.find(u => u.id === duplicate.professorId);
+    return alert(`This class is already assigned to ${owner ? owner.firstName + " " + owner.lastName : "another professor"}. No two professors can have the same class.`);
+  }
+
+  const newClass = {
+    id: `class_${code.toLowerCase().replace(/[^a-z0-9]/g, "_")}_${Date.now()}`,
+    code,
+    name,
+    professorId: appState.currentUser.id,
+    studentIds: selectedStudents,
+    active: true
+  };
+
+  appState.classes.push(newClass);
+  saveClasses();
+  document.getElementById("prof-class-form").reset();
+  renderProfessorPortal();
+  renderSubjectOptions();
+}
+
+function archiveProfessorClass(classId) {
+  const klass = getClassById(classId);
+  if (!klass || klass.professorId !== appState.currentUser.id) return;
+  if (!confirm(`Archive ${klass.code} — ${klass.name}?`)) return;
+  klass.active = false;
+  saveClasses();
+  renderProfessorPortal();
+  renderSubjectOptions();
+}
+
 function addProfessorQuestion() {
+  const classId = document.getElementById("prof-class-select").value;
+  if (!classId || !professorOwnsClass(classId)) return alert("Create or select one of your classes before adding questions.");
   const subject = document.getElementById("prof-subject").value.trim();
   const topic = document.getElementById("prof-topic").value.trim() || subject;
   const question = document.getElementById("prof-question").value.trim();
   const options = document.getElementById("prof-options").value.split("|").map(s => s.trim()).filter(Boolean);
   const correctAnswer = parseInt(document.getElementById("prof-answer").value);
   if (!subject || !question || options.length < 2) return alert("Add a subject, question, and at least two options separated by |.");
-  const newQuestion = { id: `local_${Date.now()}`, subject, topic, question, options, correctAnswer, active: true };
+  const newQuestion = { id: `local_${Date.now()}`, classId, subject, topic, question, options, correctAnswer, active: true };
   appState.allQuestions.push(newQuestion);
   const localQuestions = readJSON("quizyou_question_bank", []);
   localQuestions.push(newQuestion);
@@ -560,7 +738,13 @@ function bulkImportProfessorQuestions() {
     parsedQuestions = parseBulkCSVQuestions(raw);
   }
 
-  const validQuestions = parsedQuestions.map((q, idx) => normalizeBulkQuestion(q, idx)).filter(Boolean);
+  const selectedClassId = document.getElementById("prof-bulk-class").value;
+  if (!selectedClassId || !professorOwnsClass(selectedClassId)) {
+    status.textContent = "Create or select one of your classes before importing questions.";
+    return;
+  }
+
+  const validQuestions = parsedQuestions.map((q, idx) => normalizeBulkQuestion(q, idx, selectedClassId)).filter(Boolean);
 
   if (!validQuestions.length) {
     status.textContent = "No valid questions found. Use JSON or CSV format: Subject, Topic, Question, Option A, Option B, Option C, Option D, Correct Option";
@@ -594,7 +778,7 @@ function parseBulkCSVQuestions(raw) {
     });
 }
 
-function normalizeBulkQuestion(q, idx) {
+function normalizeBulkQuestion(q, idx, selectedClassId) {
   const subject = String(q.subject || "").trim();
   const topic = String(q.topic || subject || "General").trim();
   const question = String(q.question || "").trim();
@@ -615,6 +799,7 @@ function normalizeBulkQuestion(q, idx) {
 
   return {
     id: `bulk_${Date.now()}_${idx}_${Math.floor(Math.random() * 10000)}`,
+    classId: selectedClassId,
     subject,
     topic,
     question,
@@ -627,12 +812,14 @@ function normalizeBulkQuestion(q, idx) {
 
 function renderProfessorStudentAnalytics() {
   const select = document.getElementById("prof-student-filter");
-  const studentUsers = appState.students.filter(u => u.role === "Student");
+  const ownedClassIds = getProfessorClasses().map(c => c.id);
+  const enrolledIds = new Set(getProfessorClasses().flatMap(c => c.studentIds || []));
+  const studentUsers = appState.students.filter(u => u.role === "Student" && enrolledIds.has(u.id));
   const previousValue = select.value || "all";
   select.innerHTML = `<option value="all">All Students</option>` + studentUsers.map(u => `<option value="${escapeAttr(u.id)}">${escapeHTML(u.firstName)} ${escapeHTML(u.lastName)} (${escapeHTML(u.id)})</option>`).join("");
   select.value = [...select.options].some(o => o.value === previousValue) ? previousValue : "all";
 
-  const attempts = readJSON("quizyou_all_attempts", []);
+  const attempts = readJSON("quizyou_all_attempts", []).filter(a => !a.classId || ownedClassIds.includes(a.classId));
   const selectedStudent = select.value;
   const filtered = selectedStudent === "all" ? attempts : attempts.filter(a => a.userId === selectedStudent);
 
@@ -671,7 +858,7 @@ function renderProfessorStudentAnalytics() {
       <div class="history-card-header">
         <div>
           <strong>${escapeHTML(a.userName || a.userId)}</strong>
-          <span>${escapeHTML(a.subject)} • ${escapeHTML(a.mode || "practice")} • ${escapeHTML(a.date)}</span>
+          <span>${escapeHTML(a.className || getClassLabel(a.classId))} • ${escapeHTML(a.subject)} • ${escapeHTML(a.mode || "practice")} • ${escapeHTML(a.date)}</span>
         </div>
         <div class="history-score-big" style="${scoreStyle(a.percentage)}">${a.percentage === null ? "Hidden" : a.percentage + "%"}</div>
       </div>
