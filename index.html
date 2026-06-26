@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QuizYou — Night Mode Exam Platform</title>
+  <meta name="description" content="QuizYou: role-based quiz practice platform for students, professors, and administrators.">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="app-header">
+    <a href="#" class="brand" id="brand-link">
+      <div class="brand-logo">QY</div>
+      <div class="brand-name">QuizYou</div>
+    </a>
+    <div class="user-status">
+      <div class="user-badge">
+        <span class="user-avatar" id="user-status-avatar"></span>
+        <span id="user-status-text">Guest Mode</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="app-main">
+    <div class="glass-container">
+      <section id="screen-landing" class="screen active">
+        <div class="eyebrow">CS473-673 Software Engineering</div>
+        <h1 class="hero-title">QuizYou Practice Platform</h1>
+        <p class="hero-subtitle">A secure, role-based quiz system for students, professors, and admins. Practice timed quizzes, track performance, manage question banks, and monitor learning progress.</p>
+        <div class="feature-pills">
+          <span>Secure Login</span><span>Timed Practice</span><span>Saved Results</span><span>Role Management</span>
+        </div>
+        <div class="hero-actions">
+          <button class="btn btn-primary" id="btn-landing-start">Enter Portal</button>
+          <button class="btn btn-secondary" id="btn-landing-about">About QuizYou</button>
+        </div>
+      </section>
+
+      <section id="screen-auth" class="screen">
+        <h2 class="auth-title">Verify Identity</h2>
+        <p class="auth-desc">Enter a registered user ID or email prefix. Demo users include <strong>saranneh</strong>, <strong>professor</strong>, and <strong>admin</strong>.</p>
+        <div class="alert-box" id="auth-alert">Invalid ID. Only registered users are permitted.</div>
+        <form id="auth-form" onsubmit="return false;">
+          <div class="form-group">
+            <label for="student-id">User ID / Email Prefix</label>
+            <input type="text" id="student-id" class="form-control" placeholder="e.g. saranneh, professor, admin" required autocomplete="username">
+          </div>
+          <div class="form-group">
+            <label for="student-pw">Password</label>
+            <input type="password" id="student-pw" class="form-control" placeholder="Demo only — any password works" autocomplete="current-password">
+          </div>
+          <div class="hero-actions" style="margin-top: 2rem;">
+            <button type="submit" class="btn btn-primary" id="btn-auth-submit">Verify & Proceed</button>
+            <button type="button" class="btn btn-secondary" id="btn-auth-back">Back</button>
+          </div>
+        </form>
+      </section>
+
+      <section id="screen-config" class="screen">
+        <div class="eyebrow">Student Portal</div>
+        <h2 class="config-title">Quiz Configuration</h2>
+        <p class="config-desc">Choose a subject, number of questions, time limit, and quiz mode before starting.</p>
+        <form id="config-form" onsubmit="return false;">
+          <div class="form-group">
+            <label for="config-subject">Subject Module</label>
+            <select id="config-subject" class="form-control"></select>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="config-questions">Number of Questions</label>
+              <input type="number" id="config-questions" class="form-control" min="1" max="40" value="10">
+            </div>
+            <div class="form-group">
+              <label for="config-time">Time Limit</label>
+              <select id="config-time" class="form-control">
+                <option value="5">5 Minutes</option>
+                <option value="10" selected>10 Minutes</option>
+                <option value="20">20 Minutes</option>
+                <option value="30">30 Minutes</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="config-mode">Quiz Mode</label>
+            <select id="config-mode" class="form-control">
+              <option value="practice">Practice Mode — save score and review answers</option>
+              <option value="exam">Exam Mode — timed score attempt</option>
+            </select>
+          </div>
+          <div class="hero-actions" style="margin-top: 2.2rem;">
+            <button type="submit" class="btn btn-primary" id="btn-config-start">Start Quiz</button>
+            <button type="button" class="btn btn-secondary" id="btn-config-dashboard">View Dashboard</button>
+            <button type="button" class="btn btn-secondary" id="btn-config-history">Quiz History</button>
+          </div>
+        </form>
+      </section>
+
+      <section id="screen-quiz" class="screen">
+        <div class="quiz-header">
+          <div class="quiz-progress-label">Question <span id="quiz-current-num">1</span> of <span id="quiz-total-num">10</span></div>
+          <div class="quiz-timer">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+            <span id="quiz-timer-text">10:00</span>
+          </div>
+        </div>
+        <div class="progress-bar-container"><div class="progress-bar" id="quiz-progress-bar"></div></div>
+        <div class="question-container">
+          <h3 class="question-text" id="quiz-question-text">Question content goes here...</h3>
+          <div class="options-list" id="quiz-options-list"></div>
+        </div>
+        <div class="quiz-footer">
+          <button class="btn btn-secondary" id="btn-quiz-prev" style="visibility: hidden;">Previous</button>
+          <button class="btn btn-primary" id="btn-quiz-next">Next Question</button>
+        </div>
+      </section>
+
+      <section id="screen-results" class="screen">
+        <div class="results-header">
+          <span class="results-icon">🎉</span>
+          <h2 class="config-title">Quiz Complete</h2>
+          <p class="config-desc" id="results-welcome-message">Great effort!</p>
+        </div>
+        <div class="results-score-box">
+          <div class="score-item"><div class="score-label">Subject</div><div class="score-value" id="results-subject">All Subjects</div></div>
+          <div class="score-item"><div class="score-label">Correct</div><div class="score-value" id="results-raw">8 / 10</div></div>
+          <div class="score-item"><div class="score-label">Percentage</div><div class="score-value percentage" id="results-percent">80%</div></div>
+          <div class="score-item"><div class="score-label">Time Taken</div><div class="score-value" id="results-time-taken">02:14</div></div>
+        </div>
+        <div class="dash-card" id="results-review-card">
+          <h3 class="dash-card-title">Answer Review</h3>
+          <div class="review-list" id="results-review-list"></div>
+        </div>
+        <div class="results-actions">
+          <button class="btn btn-primary" id="btn-results-retry">Take Another Quiz</button>
+          <button class="btn btn-secondary" id="btn-results-dashboard">Dashboard</button>
+          <button class="btn btn-secondary" id="btn-results-history">History</button>
+        </div>
+      </section>
+
+      <section id="screen-dashboard" class="screen">
+        <div class="eyebrow">Student Analytics</div>
+        <h2 class="config-title">Student Dashboard</h2>
+        <p class="config-desc">Track scores, recent activity, mastery by topic, and saved practice history.</p>
+        <div class="dashboard-grid">
+          <div class="dash-card">
+            <h3 class="dash-card-title">Performance Metrics</h3>
+            <div class="results-score-box compact-score-box">
+              <div class="score-item"><div class="score-label">Average Score</div><div class="score-value" id="dash-avg-score">--</div></div>
+              <div class="score-item"><div class="score-label">Quizzes Completed</div><div class="score-value" id="dash-exams-count">0</div></div>
+              <div class="score-item"><div class="score-label">Best Score</div><div class="score-value" id="dash-best-score">--</div></div>
+              <div class="score-item"><div class="score-label">Mastery Rank</div><div class="score-value" id="dash-mastery-rank">--</div></div>
+            </div>
+          </div>
+          <div class="dash-card">
+            <h3 class="dash-card-title">Topic Mastery</h3>
+            <div id="dash-topic-mastery" class="mastery-list"></div>
+          </div>
+          <div class="dash-card">
+            <h3 class="dash-card-title">Recent Quiz History</h3>
+            <div class="history-list" id="dash-history-list"></div>
+          </div>
+        </div>
+        <div class="hero-actions">
+          <button class="btn btn-primary" id="btn-dash-config">Configure New Quiz</button>
+          <button class="btn btn-secondary" id="btn-dash-history">Full History</button>
+          <button class="btn btn-secondary" id="btn-dash-logout">Log Out</button>
+        </div>
+      </section>
+
+      <section id="screen-history" class="screen">
+        <div class="eyebrow">Saved Results</div>
+        <h2 class="config-title">Quiz History</h2>
+        <p class="config-desc">Review every completed quiz, including score, time, subject, and question-level results.</p>
+        <div class="history-toolbar">
+          <select id="history-filter" class="form-control"></select>
+          <button class="btn btn-secondary" id="btn-history-clear">Clear History</button>
+        </div>
+        <div class="history-list detailed-history" id="history-full-list"></div>
+        <div class="hero-actions">
+          <button class="btn btn-primary" id="btn-history-config">New Quiz</button>
+          <button class="btn btn-secondary" id="btn-history-dashboard">Dashboard</button>
+        </div>
+      </section>
+
+      <section id="screen-professor" class="screen">
+        <div class="eyebrow">Professor Portal</div>
+        <h2 class="config-title">Content & Analytics</h2>
+        <p class="config-desc">Manage question banks, organize questions by module/topic, control active question sets, and review class-wide performance.</p>
+        <div class="dashboard-grid">
+          <div class="dash-card">
+            <h3 class="dash-card-title">Add Question to Bank</h3>
+            <form id="prof-question-form" onsubmit="return false;">
+              <div class="form-row">
+                <div class="form-group"><label for="prof-subject">Subject</label><input id="prof-subject" class="form-control" placeholder="e.g. Testing"></div>
+                <div class="form-group"><label for="prof-topic">Topic</label><input id="prof-topic" class="form-control" placeholder="e.g. Regression"></div>
+              </div>
+              <div class="form-group"><label for="prof-question">Question</label><input id="prof-question" class="form-control" placeholder="Enter a quiz question"></div>
+              <div class="form-group"><label for="prof-options">Options</label><input id="prof-options" class="form-control" placeholder="Option A | Option B | Option C | Option D"></div>
+              <div class="form-group"><label for="prof-answer">Correct Option</label><select id="prof-answer" class="form-control"><option value="0">A</option><option value="1">B</option><option value="2">C</option><option value="3">D</option></select></div>
+              <button class="btn btn-primary" id="btn-prof-add-question">Import Question</button>
+            </form>
+          </div>
+          <div class="dash-card">
+            <h3 class="dash-card-title">Question Set Controls</h3>
+            <div id="prof-subject-controls" class="control-list"></div>
+          </div>
+          <div class="dash-card">
+            <h3 class="dash-card-title">Class-Wide Analytics</h3>
+            <div class="results-score-box compact-score-box">
+              <div class="score-item"><div class="score-label">Class Avg</div><div class="score-value" id="prof-class-avg">--</div></div>
+              <div class="score-item"><div class="score-label">Attempts</div><div class="score-value" id="prof-attempts">0</div></div>
+            </div>
+            <div id="prof-topic-analytics" class="mastery-list"></div>
+          </div>
+          <div class="dash-card">
+            <h3 class="dash-card-title">Platform Feature Toggles</h3>
+            <label class="toggle-row"><input type="checkbox" id="toggle-quizzing" checked> Quizzing Enabled</label>
+            <label class="toggle-row"><input type="checkbox" id="toggle-scoring" checked> Scoring Enabled</label>
+            <label class="toggle-row"><input type="checkbox" id="toggle-ranking" checked> Ranking Enabled</label>
+          </div>
+        </div>
+        <div class="hero-actions"><button class="btn btn-secondary" id="btn-prof-logout">Log Out</button></div>
+      </section>
+
+      <section id="screen-admin" class="screen">
+        <div class="eyebrow">Admin Portal</div>
+        <h2 class="config-title">User Registration & Roles</h2>
+        <p class="config-desc">Register users, assign Student/Professor/Admin roles, and activate or deactivate accounts.</p>
+        <div class="dashboard-grid">
+          <div class="dash-card">
+            <h3 class="dash-card-title">Register New User</h3>
+            <form id="admin-user-form" onsubmit="return false;">
+              <div class="form-row"><div class="form-group"><label for="admin-first">First Name</label><input id="admin-first" class="form-control" placeholder="First name"></div><div class="form-group"><label for="admin-last">Last Name</label><input id="admin-last" class="form-control" placeholder="Last name"></div></div>
+              <div class="form-row"><div class="form-group"><label for="admin-id">User ID</label><input id="admin-id" class="form-control" placeholder="username"></div><div class="form-group"><label for="admin-role">Role</label><select id="admin-role" class="form-control"><option>Student</option><option>Professor</option><option>Admin</option></select></div></div>
+              <button class="btn btn-primary" id="btn-admin-add-user">Register User</button>
+            </form>
+          </div>
+          <div class="dash-card"><h3 class="dash-card-title">User Directory</h3><div id="admin-user-list" class="history-list"></div></div>
+        </div>
+        <div class="hero-actions"><button class="btn btn-secondary" id="btn-admin-logout">Log Out</button></div>
+      </section>
+    </div>
+  </main>
+
+  <footer class="app-footer">
+    <div class="footer-note">QuizYou supports students, professors, and admins with role-based access.</div>
+    <span>QuizYou Project &copy; 2026. Built for CS473-673.</span>
+  </footer>
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,66 @@
+[
+  {
+    "id": "dbacon89",
+    "firstName": "David",
+    "lastName": "Bacon",
+    "email": "dbacon89@bu.edu",
+    "role": "Student",
+    "active": true
+  },
+  {
+    "id": "saranneh",
+    "firstName": "Saranne",
+    "lastName": "Hobbs",
+    "email": "saranneh@bu.edu",
+    "role": "Student",
+    "active": true
+  },
+  {
+    "id": "smuren",
+    "firstName": "Sophia",
+    "lastName": "Muren",
+    "email": "smuren@bu.edu",
+    "role": "Student",
+    "active": true
+  },
+  {
+    "id": "chaman11",
+    "firstName": "Amir",
+    "lastName": "Moshtchaman",
+    "email": "chaman11@bu.edu",
+    "role": "Student",
+    "active": true
+  },
+  {
+    "id": "abhikoka",
+    "firstName": "Abhishikth",
+    "lastName": "Koka",
+    "email": "abhikoka@bu.edu",
+    "role": "Student",
+    "active": true
+  },
+  {
+    "id": "csmith00",
+    "firstName": "Cole",
+    "lastName": "Smith",
+    "email": "csmith00@bu.edu",
+    "role": "Student",
+    "active": true
+  },
+  {
+    "id": "professor",
+    "firstName": "Demo",
+    "lastName": "Professor",
+    "email": "professor@bu.edu",
+    "role": "Professor",
+    "active": true
+  },
+  {
+    "id": "admin",
+    "firstName": "Platform",
+    "lastName": "Admin",
+    "email": "admin@bu.edu",
+    "role": "Admin",
+    "active": true
+  }
+]

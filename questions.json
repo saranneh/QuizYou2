@@ -1,0 +1,114 @@
+[
+  {
+    "id": 1,
+    "subject": "Testing",
+    "question": "Which type of testing ensures that new code changes do not break existing functionality?",
+    "options": [
+      "Unit Testing",
+      "Regression Testing",
+      "Integration Testing",
+      "System Testing"
+    ],
+    "correctAnswer": 1,
+    "topic": "Testing",
+    "active": true
+  },
+  {
+    "id": 2,
+    "subject": "Agile",
+    "question": "What is the primary purpose of a Daily Standup meeting in Scrum?",
+    "options": [
+      "To give detailed status updates to the project manager",
+      "To assign tasks to team members for the day",
+      "To sync team progress, identify blockers, and plan the next 24 hours",
+      "To demonstrate finished features to stakeholders"
+    ],
+    "correctAnswer": 2,
+    "topic": "Agile",
+    "active": true
+  },
+  {
+    "id": 3,
+    "subject": "Design Patterns",
+    "question": "Which design pattern restricts the instantiation of a class to one single instance?",
+    "options": [
+      "Factory Pattern",
+      "Observer Pattern",
+      "Singleton Pattern",
+      "Strategy Pattern"
+    ],
+    "correctAnswer": 2,
+    "topic": "Design Patterns",
+    "active": true
+  },
+  {
+    "id": 4,
+    "subject": "Git",
+    "question": "Which Git command updates your local branch with changes from a remote repository and merges them?",
+    "options": [
+      "git fetch",
+      "git pull",
+      "git push",
+      "git checkout"
+    ],
+    "correctAnswer": 1,
+    "topic": "Git",
+    "active": true
+  },
+  {
+    "id": 5,
+    "subject": "Testing",
+    "topic": "Unit",
+    "question": "Which test usually verifies one small function or method in isolation?",
+    "options": [
+      "Unit Test",
+      "System Test",
+      "Acceptance Test",
+      "Load Test"
+    ],
+    "correctAnswer": 0,
+    "active": true
+  },
+  {
+    "id": 6,
+    "subject": "Agile",
+    "topic": "Planning",
+    "question": "What is a product backlog?",
+    "options": [
+      "A list of bugs only",
+      "A prioritized list of desired work",
+      "A deployment server",
+      "A coding standard"
+    ],
+    "correctAnswer": 1,
+    "active": true
+  },
+  {
+    "id": 7,
+    "subject": "Git",
+    "topic": "Branching",
+    "question": "Why do teams use branches in Git?",
+    "options": [
+      "To delete history",
+      "To isolate changes before merging",
+      "To avoid commits",
+      "To disable collaboration"
+    ],
+    "correctAnswer": 1,
+    "active": true
+  },
+  {
+    "id": 8,
+    "subject": "Design Patterns",
+    "topic": "Behavioral",
+    "question": "Which pattern lets an object notify many observers when its state changes?",
+    "options": [
+      "Singleton",
+      "Observer",
+      "Adapter",
+      "Builder"
+    ],
+    "correctAnswer": 1,
+    "active": true
+  }
+]
